@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>旅行話務員</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#12121a;--border:#1e1e2e;--border2:#2a2a3e;--text:#e8e8f0;--muted:#666680;--accent:#e63946;--gold:#f4a261;--green:#52b788}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh}
+header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;background:rgba(18,18,26,0.9);position:sticky;top:0;z-index:100}
+.logo{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.lt{font-family:'Noto Serif JP',serif;font-size:16px;font-weight:600}
+.ls{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.wrap{max-width:480px;margin:0 auto;padding:24px 16px 40px}
+.lrow{display:flex;gap:8px;margin-bottom:24px}
+.lb{flex:1;padding:12px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;border-radius:8px;cursor:pointer;transition:all 0.2s}
+.lb.active{border-color:var(--accent);color:var(--text);background:rgba(230,57,70,0.1)}
+.field{margin-bottom:16px}
+label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+input,textarea{width:100%;padding:13px 16px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
+input:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--muted);font-size:13px}
+textarea{resize:none;height:72px;line-height:1.6}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;padding:16px;background:var(--accent);color:white;border:none;border-radius:10px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+#sp{display:none;margin-top:24px;border:1px solid var(--border2);border-radius:10px;overflow:hidden}
+.sh{padding:12px 16px;background:var(--surface);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sd{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.sd.pulse{animation:pulse 1.2s ease-in-out infinite}
+.sd.done{background:var(--gold)}
+.sd.err{background:var(--accent)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.st{font-size:12px;color:var(--text);flex:1}
+.tb{padding:16px;max-height:360px;overflow-y:auto;background:#0d0d14}
+.turn{display:flex;gap:10px;margin-bottom:16px;animation:fu 0.3s ease-out}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.badge{font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 7px;border-radius:4px;flex-shrink:0;height:fit-content;margin-top:2px}
+.badge.ai{background:rgba(230,57,70,0.15);color:var(--accent);border:1px solid rgba(230,57,70,0.3)}
+.badge.rest{background:rgba(244,162,97,0.15);color:var(--gold);border:1px solid rgba(244,162,97,0.3)}
+.badge.sys{background:rgba(102,102,128,0.15);color:var(--muted);border:1px solid rgba(102,102,128,0.3)}
+.tt{font-family:'Noto Serif JP',serif;font-size:14px;line-height:1.7;color:var(--text)}
+.rb{margin:16px;padding:16px;border-radius:8px;border:1px solid}
+.rb.ok{background:rgba(82,183,136,0.08);border-color:rgba(82,183,136,0.3);color:var(--green)}
+.rb.fail{background:rgba(230,57,70,0.08);border-color:rgba(230,57,70,0.3);color:var(--accent)}
+.rt{font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.rd{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px}
+hr.dv{border:none;border-top:1px solid var(--border);margin:12px 0}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">☎</div>
+<div><div class="lt">旅行話務員</div><div class="ls">AI Restaurant Booking</div></div>
+</header>
+<div class="wrap">
+<div class="lrow">
+<button class="lb active" id="bja" onclick="setLang('ja')">🇯🇵 日本語</button>
+<button class="lb" id="bko" onclick="setLang('ko')">🇰🇷 한국어</button>
+</div>
+<div class="field"><label>餐厅电话号码</label><input type="tel" id="phone" placeholder="+81-3-1234-5678"/></div>
+<div class="field"><label>餐厅名称</label><input type="text" id="rname" placeholder="餐厅名字"/></div>
+<div class="r2">
+<div class="field"><label>预约日期</label><input type="date" id="date"/></div>
+<div class="field"><label>时间</label><input type="time" id="time" value="19:00"/></div>
+</div>
+<div class="r2">
+<div class="field"><label>人数</label><input type="number" id="guests" value="2" min="1" max="20"/></div>
+<div class="field"><label>预约姓名</label><input type="text" id="name" placeholder="Smith"/></div>
+</div>
+<div class="field"><label>联系电话</label><input type="tel" id="contact" placeholder="+44-7700-000000"/></div>
+<div class="field"><label>特殊要求</label><textarea id="req" placeholder="靠窗、生日、素食…"></textarea></div>
+<button class="btn" id="cb" onclick="go()">▶ 开始拨号</button>
+<div id="sp">
+<div class="sh"><div class="sd pulse" id="sd"></div><div class="st" id="st">连接中…</div></div>
+<div class="tb" id="tb"></div>
+</div>
+</div>
+<script>
+let lang='ja',phone='',poll=null;
+const tom=new Date();tom.setDate(tom.getDate()+1);
+document.getElementById('date').value=tom.toISOString().split('T')[0];
+function setLang(l){lang=l;document.getElementById('bja').classList.toggle('active',l==='ja');document.getElementById('bko').classList.toggle('active',l==='ko')}
+function add(type,text){
+const b=document.getElementById('tb');
+const d=document.createElement('div');d.className='turn';
+const lm={ai:'AI',rest:'餐厅',sys:'系统'};
+d.innerHTML=`<div class="badge ${type}">${lm[type]||type}</div><div class="tt">${text}</div>`;
+b.appendChild(d);b.scrollTop=b.scrollHeight}
+function result(ok,msg){
+const b=document.getElementById('tb');
+const hr=document.createElement('hr');hr.className='dv';b.appendChild(hr);
+const d=document.createElement('div');d.className=`rb ${ok?'ok':'fail'}`;
+d.innerHTML=`<div class="rt">${ok?'✓ 预约成功':'✗ 预约失败'}</div><div class="rd">${msg}</div>`;
+b.appendChild(d);b.scrollTop=b.scrollHeight}
+function reset(){const b=document.getElementById('cb');b.disabled=false;b.textContent='▶ 重新拨号'}
+async function go(){
+const p=document.getElementById('phone').value.trim();
+const d=document.getElementById('date').value;
+const n=document.getElementById('name').value.trim();
+if(!p||!d||!n){alert('请填写电话、日期和姓名');return}
+phone=p.replace(/\s/g,'');
+document.getElementById('cb').disabled=true;
+document.getElementById('cb').textContent='拨号中…';
+document.getElementById('sp').style.display='block';
+document.getElementById('tb').innerHTML='';
+document.getElementById('sd').className='sd pulse';
+document.getElementById('st').textContent='连接中…';
+add('sys',`📞 正在拨出 ${p}…`);
+try{
+const r=await fetch('/make-call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,language:lang,restaurant_name:document.getElementById('rname').value||'餐厅',date:d,time:document.getElementById('time').value,guests:document.getElementById('guests').value,name:n,contact:document.getElementById('contact').value,requests:document.getElementById('req').value})});
+const data=await r.json();
+if(data.error){add('sys',`❌ ${data.error}`);document.getElementById('sd').className='sd err';reset();return}
+add('sys',`✅ 已接通，AI开始${lang==='ja'?'日语':'韩语'}对话`);
+document.getElementById('st').textContent='AI通话中…';
+let last=0,count=0;
+poll=setInterval(async()=>{
+count++;if(count>120){clearInterval(poll);reset();return}
+try{
+const sr=await fetch(`/call-status-check?phone=${encodeURIComponent(phone)}`);
+const s=await sr.json();
+const tr=s.transcript||[];
+if(tr.length>last){for(let i=last;i<tr.length;i++)add(tr[i].speaker==='ai'?'ai':'rest',tr[i].text);last=tr.length}
+if(s.status==='completed_success'){clearInterval(poll);document.getElementById('sd').className='sd done';document.getElementById('st').textContent='完成 · 预约成功';result(true,'餐厅已确认，请查看对话记录获取详情。');reset()}
+else if(s.status==='completed_failed'){clearInterval(poll);document.getElementById('sd').className='sd err';document.getElementById('st').textContent='完成 · 预约失败';result(false,'未能完成预约，请直接联系餐厅。');reset()}
+else if(['completed','no-answer','failed','busy'].includes(s.status)){clearInterval(poll);document.getElementById('sd').className=`sd ${last>2?'done':'err'}`;document.getElementById('st').textContent='通话结束';result(last>2,last>2?'通话完成，请确认预约详情。':'未能接通。');reset()}
+}catch(e){}},2000)
+}catch(e){add('sys',`❌ ${e.message}`);reset()}}
+</script>
+</body>
+</html>
