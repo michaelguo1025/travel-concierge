@@ -1,0 +1,6 @@
+fastapi==0.115.0
+uvicorn==0.30.0
+websockets==12.0
+python-dotenv==1.0.0
+twilio==9.3.0
+aiohttp==3.10.0
