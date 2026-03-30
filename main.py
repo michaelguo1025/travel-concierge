@@ -6,10 +6,10 @@ from twilio.twiml.voice_response import VoiceResponse, Connect
 from dotenv import load_dotenv
 load_dotenv()
 app = FastAPI()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "")
 PUBLIC_URL = os.getenv("PUBLIC_URL", "")
 active_calls = {}
 
@@ -115,14 +115,6 @@ async def send_dtmf(request: Request):
             twiml=f'<Response><Play digits="{digits}"/><Connect><Stream url="wss://{PUBLIC_URL.replace("https://","")}/media-stream?phone={phone}"/></Connect></Response>'
         )
         return JSONResponse({"ok": True})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
