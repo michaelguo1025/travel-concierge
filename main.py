@@ -95,6 +95,24 @@ async def send_dtmf(request: Request):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+
+@app.post("/cancel-call")
+async def cancel_call(request: Request):
+    data = await request.json()
+    phone = data.get("phone","").replace(" ","").replace("-","")
+    if phone not in active_calls:
+        return JSONResponse({"error": "通话不存在"}, status_code=404)
+    try:
+        call_sid = active_calls[phone].get("call_sid")
+        if call_sid:
+            client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+            client.calls(call_sid).update(status="completed")
+        active_calls[phone]["status"] = "cancelled"
+        active_calls[phone]["transcript"].append({"speaker":"sys","text":"🚫 通话已取消"})
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 @app.websocket("/media-stream")
 async def media_stream(websocket: WebSocket):
     await websocket.accept()

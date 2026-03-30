@@ -73,6 +73,10 @@ hr.dv{border:none;border-top:1px solid var(--border);margin:12px 0}
 <div class="field"><label>联系电话</label><input type="tel" id="contact" placeholder="+44-7700-000000"/></div>
 <div class="field"><label>特殊要求</label><textarea id="req" placeholder="靠窗、生日、素食…"></textarea></div>
 <button class="btn" id="cb" onclick="go()">▶ 开始拨号</button>
+
+<button class="btn-cancel" id="cancelBtn" onclick="cancelCall()" style="display:none;width:100%;padding:14px;background:transparent;color:#e63946;border:1px solid #e63946;border-radius:10px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px;">
+  ✕ 取消通话
+</button>
 <div id="sp">
 <div class="sh"><div class="sd pulse" id="sd"></div><div class="st" id="st">连接中…</div></div>
 <div class="tb" id="tb"></div>
@@ -95,7 +99,7 @@ const hr=document.createElement('hr');hr.className='dv';b.appendChild(hr);
 const d=document.createElement('div');d.className=`rb ${ok?'ok':'fail'}`;
 d.innerHTML=`<div class="rt">${ok?'✓ 预约成功':'✗ 预约失败'}</div><div class="rd">${msg}</div>`;
 b.appendChild(d);b.scrollTop=b.scrollHeight}
-function reset(){const b=document.getElementById('cb');b.disabled=false;b.textContent='▶ 重新拨号'}
+function reset(){const b=document.getElementById('cb');b.disabled=false;b.textContent='▶ 重新拨号';document.getElementById('cancelBtn').style.display='none';}
 async function go(){
 const p=document.getElementById('phone').value.trim();
 const d=document.getElementById('date').value;
@@ -128,6 +132,25 @@ else if(s.status==='completed_failed'){clearInterval(poll);document.getElementBy
 else if(['completed','no-answer','failed','busy'].includes(s.status)){clearInterval(poll);document.getElementById('sd').className=`sd ${last>2?'done':'err'}`;document.getElementById('st').textContent='通话结束';result(last>2,last>2?'通话完成，请确认预约详情。':'未能接通。');reset()}
 }catch(e){}},2000)
 }catch(e){add('sys',`❌ ${e.message}`);reset()}}
+
+async function cancelCall() {
+  if (!phone) return;
+  try {
+    await fetch('/cancel-call', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phone: phone})
+    });
+    document.getElementById('cancelBtn').style.display = 'none';
+    document.getElementById('sd').className = 'sd err';
+    document.getElementById('st').textContent = '通话已取消';
+    add('sys', '🚫 通话已取消');
+    if (poll) clearInterval(poll);
+    reset();
+  } catch(e) {
+    alert('取消失败：' + e.message);
+  }
+}
 </script>
 </body>
 </html>
