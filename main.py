@@ -13,6 +13,23 @@ TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 PUBLIC_URL = os.getenv("PUBLIC_URL", "")
 active_calls = {}
 
+
+def get_cancel_prompt(lang, info):
+    if lang == "ja":
+        return f"""あなたはプロの予約キャンセルアシスタントです。レストランに電話して予約をキャンセルします。
+キャンセル情報：日付{info.get('date','')} {info.get('time','')}、{info.get('guests','')}名、{info.get('name','')}名義
+指示：
+- 自動音声メニューが流れたら「PRESS:番号」で対応してください
+- 人間が出たら丁寧にキャンセルをお願いしてください
+- 完了したら「キャンセル完了しました」、できなければ「キャンセルできませんでした」と言ってください"""
+    else:
+        return f"""당신은 전문 예약 취소 어시스턴트입니다. 레스토랑에 전화해서 예약을 취소합니다.
+취소 정보：날짜 {info.get('date','')} {info.get('time','')}、{info.get('guests','')}명、{info.get('name','')} 이름
+지시사항：
+- 자동 음성 메뉴가 나오면 「PRESS:번호」로 대응하세요
+- 사람이 나오면 정중하게 취소를 부탁하세요
+- 완료시 「취소가 완료되었습니다」、실패시 「취소가 되지 않았습니다」라고 하세요"""
+
 def get_prompt(lang, info):
     base = f"""
 予約情報：日付{info['date']} {info['time']}、{info['guests']}名、{info['name']}名義、連絡先{info['contact']}、特別リクエスト：{info.get('requests','なし')}
@@ -96,38 +113,10 @@ async def send_dtmf(request: Request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
-@app.post("/cancel-call")
-async def cancel_call(request: Request):
-    data = await request.json()
-    phone = data.get("phone","").replace(" ","").replace("-","")
-    if phone not in active_calls:
-        return JSONResponse({"error": "通话不存在"}, status_code=404)
-    try:
-        call_sid = active_calls[phone].get("call_sid")
-        if call_sid:
-            client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-            client.calls(call_sid).update(status="completed")
-        active_calls[phone]["status"] = "cancelled"
-        active_calls[phone]["transcript"].append({"speaker":"sys","text":"🚫 通话已取消"})
-        return JSONResponse({"ok": True})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
-@app.post("/cancel-call")
-async def cancel_call(request: Request):
-    data = await request.json()
-    phone = data.get("phone","").replace(" ","").replace("-","")
-    if phone not in active_calls:
-        return JSONResponse({"error": "通话不存在"}, status_code=404)
-    try:
-        call_sid = active_calls[phone].get("call_sid")
-        if call_sid:
-            client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-            client.calls(call_sid).update(status="completed")
-        active_calls[phone]["status"] = "cancelled"
-        active_calls[phone]["transcript"].append({"speaker":"sys","text":"🚫 通话已取消"})
-        return JSONResponse({"ok": True})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
@@ -137,7 +126,8 @@ async def media_stream(websocket: WebSocket):
     phone = websocket.query_params.get("phone","")
     info = active_calls.get(phone, {})
     lang = info.get("language","ja")
-    prompt = get_prompt(lang, info)
+    mode = info.get('mode', 'book')
+    prompt = get_cancel_prompt(lang, info) if mode == 'cancel' else get_prompt(lang, info)
     voice = "shimmer" if lang == "ja" else "nova"
     url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17"
     headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "OpenAI-Beta": "realtime=v1"}

@@ -56,6 +56,11 @@ hr.dv{border:none;border-top:1px solid var(--border);margin:12px 0}
 <div><div class="lt">旅行話務員</div><div class="ls">AI Restaurant Booking</div></div>
 </header>
 <div class="wrap">
+
+<div class="lrow" style="margin-bottom:16px;">
+  <button class="lb active" id="mode-book" onclick="setMode('book')">📅 新建预约</button>
+  <button class="lb" id="mode-cancel" onclick="setMode('cancel')">❌ 取消预约</button>
+</div>
 <div class="lrow">
 <button class="lb active" id="bja" onclick="setLang('ja')">🇯🇵 日本語</button>
 <button class="lb" id="bko" onclick="setLang('ko')">🇰🇷 한국어</button>
@@ -73,18 +78,23 @@ hr.dv{border:none;border-top:1px solid var(--border);margin:12px 0}
 <div class="field"><label>联系电话</label><input type="tel" id="contact" placeholder="+44-7700-000000"/></div>
 <div class="field"><label>特殊要求</label><textarea id="req" placeholder="靠窗、生日、素食…"></textarea></div>
 <button class="btn" id="cb" onclick="go()">▶ 开始拨号</button>
-
-<button class="btn-cancel" id="cancelBtn" onclick="cancelCall()" style="display:none;width:100%;padding:14px;background:transparent;color:#e63946;border:1px solid #e63946;border-radius:10px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px;">
-  ✕ 取消通话
-</button>
-
-<button class="btn-cancel" id="cancelBtn" onclick="cancelCall()" style="display:none;width:100%;padding:14px;background:transparent;color:#e63946;border:1px solid #e63946;border-radius:10px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px;">✕ 取消通话</button>
 <div id="sp">
 <div class="sh"><div class="sd pulse" id="sd"></div><div class="st" id="st">连接中…</div></div>
 <div class="tb" id="tb"></div>
 </div>
 </div>
 <script>
+
+let mode = 'book';
+function setMode(m) {
+  mode = m;
+  const isBook = m === 'book';
+  document.getElementById('mode-book').classList.toggle('active', isBook);
+  document.getElementById('mode-cancel').classList.toggle('active', !isBook);
+  document.getElementById('cb').textContent = isBook ? '▶ 开始拨号' : '▶ 取消预约';
+  document.getElementById('req').parentElement.style.display = isBook ? 'block' : 'none';
+}
+
 let lang='ja',phone='',poll=null;
 const tom=new Date();tom.setDate(tom.getDate()+1);
 document.getElementById('date').value=tom.toISOString().split('T')[0];
@@ -101,7 +111,7 @@ const hr=document.createElement('hr');hr.className='dv';b.appendChild(hr);
 const d=document.createElement('div');d.className=`rb ${ok?'ok':'fail'}`;
 d.innerHTML=`<div class="rt">${ok?'✓ 预约成功':'✗ 预约失败'}</div><div class="rd">${msg}</div>`;
 b.appendChild(d);b.scrollTop=b.scrollHeight}
-function reset(){const b=document.getElementById('cb');b.disabled=false;b.textContent='▶ 重新拨号';document.getElementById('cancelBtn').style.display='none';}
+function reset(){const b=document.getElementById('cb');b.disabled=false;b.textContent='▶ 重新拨号'}
 async function go(){
 const p=document.getElementById('phone').value.trim();
 const d=document.getElementById('date').value;
@@ -116,7 +126,7 @@ document.getElementById('sd').className='sd pulse';
 document.getElementById('st').textContent='连接中…';
 add('sys',`📞 正在拨出 ${p}…`);
 try{
-const r=await fetch('/make-call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,language:lang,restaurant_name:document.getElementById('rname').value||'餐厅',date:d,time:document.getElementById('time').value,guests:document.getElementById('guests').value,name:n,contact:document.getElementById('contact').value,requests:document.getElementById('req').value})});
+const r=await fetch('/make-call',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,language:lang,mode:mode,restaurant_name:document.getElementById('rname').value||'餐厅',date:d,time:document.getElementById('time').value,guests:document.getElementById('guests').value,name:n,contact:document.getElementById('contact').value,requests:document.getElementById('req').value})});
 const data=await r.json();
 if(data.error){add('sys',`❌ ${data.error}`);document.getElementById('sd').className='sd err';reset();return}
 add('sys',`✅ 已接通，AI开始${lang==='ja'?'日语':'韩语'}对话`);
@@ -134,37 +144,7 @@ else if(s.status==='completed_failed'){clearInterval(poll);document.getElementBy
 else if(['completed','no-answer','failed','busy'].includes(s.status)){clearInterval(poll);document.getElementById('sd').className=`sd ${last>2?'done':'err'}`;document.getElementById('st').textContent='通话结束';result(last>2,last>2?'通话完成，请确认预约详情。':'未能接通。');reset()}
 }catch(e){}},2000)
 }catch(e){add('sys',`❌ ${e.message}`);reset()}}
-
-async function cancelCall() {
-  if (!phone) return;
-  try {
-    await fetch('/cancel-call', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({phone: phone})
-    });
-    document.getElementById('cancelBtn').style.display = 'none';
-    document.getElementById('sd').className = 'sd err';
-    document.getElementById('st').textContent = '通话已取消';
-    add('sys', '🚫 通话已取消');
-    if (poll) clearInterval(poll);
-    reset();
-  } catch(e) {
-    alert('取消失败：' + e.message);
-  }
 }
-
-async function cancelCall() {
-  if (!phone) return;
-  try {
-    await fetch('/cancel-call', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:phone})});
-    document.getElementById('cancelBtn').style.display='none';
-    document.getElementById('sd').className='sd err';
-    document.getElementById('st').textContent='通话已取消';
-    add('sys','🚫 通话已取消');
-    if (poll) clearInterval(poll);
-    reset();
-  } catch(e) { alert('取消失败：'+e.message); }
 }
 </script>
 </body>
