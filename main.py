@@ -48,6 +48,12 @@ def get_prompt(lang, info):
 """
     return base
 
+
+@app.get("/debug-env")
+async def debug_env():
+    import os
+    return {"sid": os.getenv("TWILIO_ACCOUNT_SID", "NOT_FOUND")[:10],"token": os.getenv("TWILIO_AUTH_TOKEN", "NOT_FOUND")[:10]}
+
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open("index.html", "r", encoding="utf-8") as f:
