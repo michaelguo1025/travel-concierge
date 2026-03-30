@@ -77,6 +77,8 @@ hr.dv{border:none;border-top:1px solid var(--border);margin:12px 0}
 <button class="btn-cancel" id="cancelBtn" onclick="cancelCall()" style="display:none;width:100%;padding:14px;background:transparent;color:#e63946;border:1px solid #e63946;border-radius:10px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px;">
   ✕ 取消通话
 </button>
+
+<button class="btn-cancel" id="cancelBtn" onclick="cancelCall()" style="display:none;width:100%;padding:14px;background:transparent;color:#e63946;border:1px solid #e63946;border-radius:10px;font-family:'DM Mono',monospace;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px;">✕ 取消通话</button>
 <div id="sp">
 <div class="sh"><div class="sd pulse" id="sd"></div><div class="st" id="st">连接中…</div></div>
 <div class="tb" id="tb"></div>
@@ -150,6 +152,19 @@ async function cancelCall() {
   } catch(e) {
     alert('取消失败：' + e.message);
   }
+}
+
+async function cancelCall() {
+  if (!phone) return;
+  try {
+    await fetch('/cancel-call', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:phone})});
+    document.getElementById('cancelBtn').style.display='none';
+    document.getElementById('sd').className='sd err';
+    document.getElementById('st').textContent='通话已取消';
+    add('sys','🚫 通话已取消');
+    if (poll) clearInterval(poll);
+    reset();
+  } catch(e) { alert('取消失败：'+e.message); }
 }
 </script>
 </body>
